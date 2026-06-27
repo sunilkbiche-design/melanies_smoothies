@@ -1,18 +1,5 @@
 import streamlit as st
-# New section to display smoothiefruit nutrition information
-
 import requests
-
-smoothiefruit_response = requests.get(
-    "https://my.smoothiefroot.com/api/fruit/watermelon"
-)
-
-# st.text(smoothiefruit_response.json())
-
-sf_df = st.dataframe(
-    data=smoothiefruit_response.json(),
-    use_container_width=True
-)
 
 from snowflake.snowpark.functions import col
 
@@ -61,8 +48,10 @@ ingredients_list = st.multiselect(
 )
 
 # -------------------------------------------------------
-# Build Ingredient String
+# Show Selected Ingredients
 # -------------------------------------------------------
+
+ingredients_string = ""
 
 if ingredients_list:
 
@@ -71,6 +60,41 @@ if ingredients_list:
     st.write("Your ingredients are:")
 
     st.write(ingredients_string)
+
+# -------------------------------------------------------
+# SmoothieFroot Nutrition Information
+# -------------------------------------------------------
+
+st.subheader("Smoothie Nutrition Information")
+
+if ingredients_list:
+
+    for fruit in ingredients_list:
+
+        st.write(f"### {fruit.title()}")
+
+        try:
+
+            smoothiefruit_response = requests.get(
+                f"https://my.smoothiefroot.com/api/fruit/{fruit}"
+            )
+
+            if smoothiefruit_response.status_code == 200:
+
+                st.dataframe(
+                    data=smoothiefruit_response.json(),
+                    use_container_width=True
+                )
+
+            else:
+
+                st.error(
+                    f"Unable to retrieve nutrition information for {fruit}"
+                )
+
+        except Exception as e:
+
+            st.error(f"API Error: {e}")
 
 # -------------------------------------------------------
 # Submit Order
@@ -99,4 +123,4 @@ if time_to_insert:
 
         session.sql(insert_sql).collect()
 
-        st.success("Your Smoothie is ordered!", icon="🥤")
+        st.success("🥤 Your Smoothie has been ordered successfully!")
